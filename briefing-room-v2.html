@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Briefing Room — SEforALL Flash Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,600&family=Mulish:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   BRAND TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --gold:       #FFB800;
+  --navy:       #022437;
+  --blue:       #065A89;
+  --lime:       #9BBE1D;
+  --forest:     #183F37;
+  --orange:     #FF6A13;
+  --ice:        #F0F7FA;
+  --white:      #FFFFFF;
+  --red:        #DD2E2B;
+  --ink:        #022437;
+  --muted:      #4A6070;
+  --border:     #C8D8E2;
+  --rule:       1px solid var(--border);
+
+  --f-display: 'Barlow Condensed', sans-serif;
+  --f-body:    'Mulish', sans-serif;
+
+  --editor-bg: #EEF3F6;
+  --panel-bg:  #F8FAFB;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--f-body); background: var(--editor-bg); color: var(--ink); font-size: 13px; }
+
+/* ═══════════════════════════════════════════
+   APP SHELL — 2-COLUMN EDITOR
+═══════════════════════════════════════════ */
+.app { display: grid; grid-template-columns: 360px 1fr; grid-template-rows: 52px 1fr; height: 100vh; overflow: hidden; }
+
+/* TOP BAR */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 3px solid var(--gold);
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-name {
+  font-family: var(--f-display); font-size: 18px; font-weight: 700;
+  color: var(--white); letter-spacing: 1.5px; text-transform: uppercase;
+}
+.brand-divider { width: 1px; height: 22px; background: rgba(255,255,255,0.2); }
+.brand-sub {
+  font-family: var(--f-body); font-size: 10px; font-weight: 500;
+  color: rgba(255,255,255,0.5); letter-spacing: 1.5px; text-transform: uppercase;
+}
+.topbar-actions { display: flex; gap: 6px; align-items: center; }
+.tbtn {
+  font-family: var(--f-body); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.5px; cursor: pointer; padding: 6px 14px; border-radius: 3px;
+  border: 1.5px solid; transition: all 0.15s; display: flex; align-items: center; gap: 5px;
+}
+.tbtn-ghost { background: transparent; border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); }
+.tbtn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.5); }
+.tbtn-gold { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 700; }
+.tbtn-gold:hover { background: #e6a500; }
+.tbtn-blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+.tbtn-blue:hover { background: #054e78; }
+
+/* ═══════════════════════════════════════════
+   EDITOR SIDEBAR
+═══════════════════════════════════════════ */
+.editor-panel {
+  background: #fff;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.editor-section {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.sec-label {
+  font-family: var(--f-display); font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
+}
+.sec-num {
+  background: var(--blue); color: #fff; width: 17px; height: 17px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-family: var(--f-body); font-weight: 700; flex-shrink: 0;
+}
+.field { margin-bottom: 9px; }
+.field:last-child { margin-bottom: 0; }
+.fl { font-size: 10.5px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 3px; letter-spacing: 0.3px; }
+.fi, .ft, .fs {
+  width: 100%; font-family: var(--f-body); font-size: 12px; font-weight: 400;
+  border: 1px solid var(--border); border-radius: 3px; padding: 6px 9px;
+  color: var(--ink); background: var(--panel-bg); transition: border-color 0.15s;
+}
+.fi:focus, .ft:focus, .fs:focus { outline: none; border-color: var(--blue); background: #fff; }
+.ft { min-height: 64px; resize: vertical; line-height: 1.5; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Panel tabs */
+.ptabs { display: flex; border-bottom: 1px solid var(--border); background: var(--panel-bg); }
+.ptab {
+  flex: 1; padding: 8px 0; font-family: var(--f-body); font-size: 10.5px; font-weight: 700;
+  text-align: center; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); transition: all 0.15s; letter-spacing: 0.5px;
+}
+.ptab.active { color: var(--navy); border-bottom-color: var(--gold); background: #fff; }
+.ptab:hover:not(.active) { color: var(--navy); }
+.ptab-content { display: none; padding: 14px 16px; }
+.ptab-content.active { display: block; }
+
+/* Tag chips */
+.chip-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.chip {
+  font-family: var(--f-body); font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 3px 9px; border-radius: 2px; border: 1px solid; cursor: pointer;
+  transition: all 0.15s; opacity: 0.45;
+}
+.chip.on { opacity: 1; }
+.chip-gold   { background: #FFF8E0; color: #8A6200; border-color: var(--gold); }
+.chip-blue   { background: #EAF3FA; color: var(--blue); border-color: var(--blue); }
+.chip-lime   { background: #F3F8E5; color: #4A6200; border-color: var(--lime); }
+.chip-orange { background: #FFF1EA; color: #8A3200; border-color: var(--orange); }
+.chip-red    { background: #FDEAEA; color: #8A1010; border-color: var(--red); }
+.chip-forest { background: #EAF0EF; color: var(--forest); border-color: var(--forest); }
+
+/* Accent swatch */
+.swatch-row { display: flex; gap: 6px; margin-top: 4px; }
+.swatch {
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: border-color 0.12s;
+}
+.swatch.on { border-color: var(--navy); }
+
+/* Char picker */
+.char-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.char-chip {
+  font-family: var(--f-body); font-size: 11px; font-weight: 600; padding: 4px 10px;
+  border-radius: 2px; border: 1px solid; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 4px; opacity: 0.5;
+}
+.char-chip.on { opacity: 1; }
+
+/* ═══════════════════════════════════════════
+   PREVIEW AREA
+═══════════════════════════════════════════ */
+.preview-panel {
+  overflow-y: auto; padding: 24px;
+  background: var(--editor-bg);
+  display: flex; flex-direction: column; align-items: center;
+}
+.preview-label {
+  font-family: var(--f-display); font-size: 10px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 14px; text-align: center;
+}
+
+/* ═══════════════════════════════════════════
+   FLASH OUTPUT — EXECUTIVE STYLE
+═══════════════════════════════════════════ */
+.flash {
+  width: 680px;
+  background: var(--white);
+  font-family: var(--f-body);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 16px rgba(2,36,55,0.10);
+}
+
+/* HEADER */
+.flash-header {
+  background: var(--navy);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.flash-header-inner {
+  display: flex; align-items: stretch; justify-content: space-between;
+  padding: 18px 22px 16px;
+  position: relative; z-index: 1;
+}
+.flash-header-geo {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 200px;
+  background: linear-gradient(135deg, transparent 0%, rgba(6,90,137,0.4) 100%);
+  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+}
+.flash-wordmark {
+  font-family: var(--f-display); font-size: 28px; font-weight: 700;
+  color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1;
+}
+.flash-wordmark span { color: var(--gold); }
+.flash-tagline {
+  font-family: var(--f-body); font-size: 9.5px; font-weight: 500;
+  color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase;
+  margin-top: 4px;
+}
+.flash-meta-block { text-align: right; }
+.flash-issue {
+  font-family: var(--f-display); font-size: 11px; font-weight: 600;
+  color: var(--gold); letter-spacing: 2px; text-transform: uppercase;
+  background: rgba(255,184,0,0.12); padding: 3px 10px; border-radius: 2px;
+  border: 1px solid rgba(255,184,0,0.3); display: inline-block; margin-bottom: 5px;
+}
+.flash-date, .flash-report-name {
+  font-family: var(--f-body); font-size: 10px; font-weight: 400;
+  color: rgba(255,255,255,0.5); line-height: 1.6; display: block;
+}
+.flash-report-name { color: rgba(255,255,255,0.75); font-weight: 500; }
+.flash-gold-rule { height: 3px; background: var(--gold); }
+.flash-source-bar {
+  background: var(--blue); color: rgba(255,255,255,0.85);
+  font-family: var(--f-body); font-size: 10px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 5px 22px; display: flex; align-items: center; gap: 8px;
+}
+.flash-source-bar .sep { opacity: 0.3; }
+.flash-source-bar strong { color: #fff; font-weight: 600; }
+
+/* PANEL GRID */
+.flash-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border);
+}
+.f-panel {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--white); position: relative; overflow: hidden;
+}
+.f-panel:nth-child(2n) { border-right: none; }
+.f-panel.span2 { grid-column: span 2; border-right: none; }
+.panel-top-rule { height: 3px; }
+.panel-body { padding: 16px 18px 14px; min-height: 180px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Tag pill */
+.f-tag {
+  font-family: var(--f-display); font-size: 10px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 8px;
+  border-radius: 2px; border: 1px solid; display: inline-block;
+  align-self: flex-start;
+}
+.f-tag-gold   { background: #FFF8E0; color: #7A5500; border-color: var(--gold); }
+.f-tag-blue   { background: #EAF3FA; color: var(--blue); border-color: var(--blue); }
+.f-tag-lime   { background: #F3F8E5; color: #3A5000; border-color: var(--lime); }
+.f-tag-orange { background: #FFF1EA; color: #7A2800; border-color: var(--orange); }
+.f-tag-red    { background: #FDEAEA; color: #7A0808; border-color: var(--red); }
+.f-tag-forest { background: #EAF0EF; color: var(--forest); border-color: var(--forest); }
+
+/* Character + bubble layout */
+.char-row { display: flex; gap: 12px; align-items: flex-start; }
+.char-block { flex-shrink: 0; text-align: center; width: 58px; }
+.char-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin: 0 auto;
+  border: 2px solid; position: relative;
+}
+.char-name-label {
+  font-family: var(--f-display); font-size: 8.5px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px;
+  line-height: 1.2; color: var(--muted);
+}
+.bubble-col { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+
+/* Speech bubble — executive style: no cartoon tail, clean card */
+.speech-card {
+  background: var(--ice);
+  border-left: 3px solid var(--blue);
+  padding: 10px 12px;
+  border-radius: 0 4px 4px 0;
+  font-family: var(--f-body); font-size: 12.5px; line-height: 1.55; color: var(--ink);
+}
+.speech-card.analyst-style  { border-left-color: var(--blue); }
+.speech-card.skeptic-style  { border-left-color: var(--orange); }
+.speech-card.field-style    { border-left-color: var(--lime); }
+
+/* Insight box (replaces thought bubble) */
+.insight-box {
+  background: #FFFBF0; border: 1px solid rgba(255,184,0,0.4);
+  border-left: 3px solid var(--gold);
+  padding: 8px 11px; border-radius: 0 3px 3px 0;
+  font-family: var(--f-body); font-style: italic; font-size: 11.5px;
+  line-height: 1.5; color: var(--navy);
+}
+
+/* Stat callout */
+.stat-callout {
+  background: var(--navy); color: var(--white);
+  padding: 12px 14px; border-radius: 3px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.stat-big {
+  font-family: var(--f-display); font-size: 44px; font-weight: 700;
+  color: var(--gold); line-height: 1; letter-spacing: 0px;
+}
+.stat-desc {
+  font-family: var(--f-body); font-size: 10.5px; font-weight: 500;
+  color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.8px;
+  line-height: 1.4; flex: 1;
+}
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 5px; }
+.b-row { display: flex; align-items: center; gap: 8px; }
+.b-label { font-family: var(--f-body); font-size: 10.5px; font-weight: 500; color: var(--muted); min-width: 62px; }
+.b-track { flex: 1; height: 8px; background: var(--ice); border-radius: 1px; overflow: hidden; }
+.b-fill { height: 100%; border-radius: 1px; }
+.b-val { font-family: var(--f-display); font-size: 12px; font-weight: 600; color: var(--navy); min-width: 30px; text-align: right; }
+
+/* Contrast metric row */
+.metric-row { display: flex; gap: 8px; }
+.metric-card {
+  flex: 1; border-radius: 3px; padding: 9px 10px; border: 1px solid;
+  text-align: center;
+}
+.metric-card .m-val { font-family: var(--f-display); font-size: 22px; font-weight: 700; line-height: 1; }
+.metric-card .m-label { font-family: var(--f-body); font-size: 9.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 3px; opacity: 0.8; }
+
+/* Intel strip */
+.intel-strip {
+  border-bottom: 1px solid var(--border);
+  background: var(--ice); padding: 10px 18px;
+  display: flex; align-items: flex-start; gap: 10px;
+  grid-column: span 2;
+}
+.intel-kicker {
+  font-family: var(--f-display); font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--blue);
+  background: rgba(6,90,137,0.1); padding: 2px 7px; border-radius: 2px;
+  flex-shrink: 0; margin-top: 1px;
+}
+.intel-text {
+  font-family: var(--f-body); font-size: 11.5px; font-weight: 500;
+  color: var(--navy); line-height: 1.55; font-style: italic;
+}
+
+/* SO WHAT */
+.sowhat-section {
+  background: var(--navy); padding: 16px 22px;
+}
+.sowhat-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.sowhat-kicker {
+  font-family: var(--f-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold);
+}
+.sowhat-rule { flex: 1; height: 1px; background: rgba(255,184,0,0.25); }
+.sowhat-items { display: flex; flex-direction: column; gap: 0; }
+.sowhat-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sowhat-item:last-child { border-bottom: none; }
+.sw-bullet {
+  font-family: var(--f-display); font-size: 11px; font-weight: 700;
+  color: var(--gold); flex-shrink: 0; margin-top: 1px;
+}
+.sw-text {
+  font-family: var(--f-body); font-size: 12px; font-weight: 400;
+  color: rgba(255,255,255,0.85); line-height: 1.55;
+}
+
+/* FOOTER */
+.flash-footer {
+  background: var(--ice); padding: 8px 22px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border);
+}
+.footer-cast { display: flex; gap: 12px; align-items: center; }
+.cast-item { display: flex; align-items: center; gap: 5px; font-family: var(--f-body); font-size: 10px; font-weight: 500; color: var(--muted); }
+.cast-swatch { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
+.footer-right { font-family: var(--f-body); font-size: 9.5px; font-weight: 500; color: var(--muted); letter-spacing: 0.5px; }
+
+/* ═══════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════ */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(2,36,55,0.65); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border: 1px solid var(--border); max-width: 720px; width: 95%; max-height: 82vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(2,36,55,0.2); border-radius: 4px; overflow: hidden; }
+.modal-head { background: var(--navy); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--gold); }
+.modal-title { font-family: var(--f-display); font-size: 16px; font-weight: 700; color: var(--white); letter-spacing: 1px; }
+.modal-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 18px; cursor: pointer; }
+.modal-close:hover { color: #fff; }
+.modal-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+.code-box { background: #0d1b2a; color: #c8d8e2; font-family: 'Courier New', monospace; font-size: 10.5px; line-height: 1.6; padding: 14px; border-radius: 3px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 48vh; overflow-y: auto; }
+.modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--panel-bg); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--editor-bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* print */
+@media print {
+  .app { display: block; }
+  .editor-panel, .topbar, .preview-label { display: none !important; }
+  .preview-panel { padding: 0; background: #fff; }
+  .flash { box-shadow: none; border: none; width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-name">The Briefing Room</span>
+    <span class="brand-divider"></span>
+    <span class="brand-sub">SEforALL Energy Intelligence Flash Editor</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="tbtn tbtn-ghost" onclick="doPrint()">Print / PDF</button>
+    <button class="tbtn tbtn-blue" onclick="showExport()">Export HTML</button>
+    <button class="tbtn tbtn-gold" onclick="copyHTML()">Copy HTML</button>
+  </div>
+</header>
+
+<!-- EDITOR -->
+<aside class="editor-panel">
+
+  <!-- ISSUE META -->
+  <div class="editor-section">
+    <div class="sec-label"><span class="sec-num">1</span> Issue Info</div>
+    <div class="field-row">
+      <div class="field">
+        <label class="fl">Issue #</label>
+        <input class="fi" id="f-issue" value="01" oninput="render()">
+      </div>
+      <div class="field">
+        <label class="fl">Date</label>
+        <input class="fi" id="f-date" value="March 2026" oninput="render()">
+      </div>
+    </div>
+    <div class="field">
+      <label class="fl">Report / Source</label>
+      <input class="fi" id="f-source" value="IEA Africa Energy Outlook 2024" oninput="render()">
+    </div>
+    <div class="field">
+      <label class="fl">Read time</label>
+      <input class="fi" id="f-readtime" value="90 seconds" oninput="render()">
+    </div>
+  </div>
+
+  <!-- PANELS -->
+  <div class="editor-section" style="padding:0;">
+    <div class="ptabs">
+      <button class="ptab active" onclick="switchTab(0)">Panel 1</button>
+      <button class="ptab" onclick="switchTab(1)">Panel 2</button>
+      <button class="ptab" onclick="switchTab(2)">Panel 3</button>
+      <button class="ptab" onclick="switchTab(3)">Panel 4</button>
+      <button class="ptab" onclick="switchTab(4)">Intel</button>
+    </div>
+
+    <!-- P1 -->
+    <div class="ptab-content active" id="pc0">
+      <div class="field">
+        <label class="fl">Tag label</label>
+        <div class="chip-row" id="tag0">
+          <span class="chip chip-gold on"  onclick="setTag(0,'gold','Key Statistic')">Key Statistic</span>
+          <span class="chip chip-blue"     onclick="setTag(0,'blue','Trend')">Trend</span>
+          <span class="chip chip-red"      onclick="setTag(0,'red','Critical Gap')">Critical Gap</span>
+          <span class="chip chip-lime"     onclick="setTag(0,'lime','Opportunity')">Opportunity</span>
+          <span class="chip chip-orange"   onclick="setTag(0,'orange','Field Signal')">Field Signal</span>
+          <span class="chip chip-forest"   onclick="setTag(0,'forest','Policy Note')">Policy Note</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Character voice</label>
+        <div class="char-chips" id="char0">
+          <span class="char-chip on" style="background:#EAF3FA;color:#065A89;border-color:#065A89;" onclick="setChar(0,'analyst','📊','The Analyst','#EAF3FA','#065A89','analyst-style')">📊 Analyst</span>
+          <span class="char-chip" style="background:#FFF1EA;color:#7A2800;border-color:#FF6A13;" onclick="setChar(0,'skeptic','🔍','The Skeptic','#FFF1EA','#7A2800','skeptic-style')">🔍 Skeptic</span>
+          <span class="char-chip" style="background:#F3F8E5;color:#3A5000;border-color:#9BBE1D;" onclick="setChar(0,'field','🌍','Field Voice','#F3F8E5','#3A5000','field-style')">🌍 Field</span>
+          <span class="char-chip" style="background:#F0F7FA;color:#4A6070;border-color:#C8D8E2;" onclick="setChar(0,'none','','none','#F0F7FA','#4A6070','analyst-style')">No character</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Main text (HTML ok: &lt;strong&gt; &lt;em&gt;)</label>
+        <textarea class="ft" id="p0-text" oninput="render()"><strong>600 million</strong> people in Sub-Saharan Africa still lack electricity — roughly 47% of the population, a figure nearly unchanged since 2015 despite a decade of effort.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Stat highlight — large number (leave blank to hide)</label>
+        <div class="field-row">
+          <div><label class="fl">Number</label><input class="fi" id="p0-num" value="600M" oninput="render()"></div>
+          <div><label class="fl">Description</label><input class="fi" id="p0-desc" value="people without electricity · Sub-Saharan Africa" oninput="render()"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Accent rule colour</label>
+        <div class="swatch-row" id="acc0">
+          <div class="swatch on"  style="background:var(--gold)"   onclick="setAccent(0,'gold','var(--gold)')"></div>
+          <div class="swatch"     style="background:var(--blue)"   onclick="setAccent(0,'blue','var(--blue)')"></div>
+          <div class="swatch"     style="background:var(--lime)"   onclick="setAccent(0,'lime','var(--lime)')"></div>
+          <div class="swatch"     style="background:var(--orange)" onclick="setAccent(0,'orange','var(--orange)')"></div>
+          <div class="swatch"     style="background:var(--red)"    onclick="setAccent(0,'red','var(--red)')"></div>
+          <div class="swatch"     style="background:var(--forest)" onclick="setAccent(0,'forest','var(--forest)')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="ptab-content" id="pc1">
+      <div class="field">
+        <label class="fl">Tag label</label>
+        <div class="chip-row" id="tag1">
+          <span class="chip chip-gold"    onclick="setTag(1,'gold','Key Statistic')">Key Statistic</span>
+          <span class="chip chip-blue"    onclick="setTag(1,'blue','Trend')">Trend</span>
+          <span class="chip chip-red on"  onclick="setTag(1,'red','What the Headline Misses')">What the Headline Misses</span>
+          <span class="chip chip-lime"    onclick="setTag(1,'lime','Opportunity')">Opportunity</span>
+          <span class="chip chip-orange"  onclick="setTag(1,'orange','Field Signal')">Field Signal</span>
+          <span class="chip chip-forest"  onclick="setTag(1,'forest','Policy Note')">Policy Note</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Character voice</label>
+        <div class="char-chips" id="char1">
+          <span class="char-chip" style="background:#EAF3FA;color:#065A89;border-color:#065A89;" onclick="setChar(1,'analyst','📊','The Analyst','#EAF3FA','#065A89','analyst-style')">📊 Analyst</span>
+          <span class="char-chip on" style="background:#FFF1EA;color:#7A2800;border-color:#FF6A13;" onclick="setChar(1,'skeptic','🔍','The Skeptic','#FFF1EA','#7A2800','skeptic-style')">🔍 Skeptic</span>
+          <span class="char-chip" style="background:#F3F8E5;color:#3A5000;border-color:#9BBE1D;" onclick="setChar(1,'field','🌍','Field Voice','#F3F8E5','#3A5000','field-style')">🌍 Field</span>
+          <span class="char-chip" style="background:#F0F7FA;color:#4A6070;border-color:#C8D8E2;" onclick="setChar(1,'none','','none','#F0F7FA','#4A6070','analyst-style')">No character</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Main text</label>
+        <textarea class="ft" id="p1-text" oninput="render()">Population grew <em>faster</em> than connections. The access <em>rate</em> rose — but the absolute number of unelectrified people is higher than in 2019. We have been measuring the metric that flatters the system.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Insight box (analytical observation — leave blank to hide)</label>
+        <textarea class="ft" style="min-height:50px" id="p1-insight" oninput="render()">The distinction between rate-based and absolute progress is critical for how SDG7 targets are reported and how M300 country compacts define success.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Accent rule colour</label>
+        <div class="swatch-row" id="acc1">
+          <div class="swatch"     style="background:var(--gold)"   onclick="setAccent(1,'gold','var(--gold)')"></div>
+          <div class="swatch"     style="background:var(--blue)"   onclick="setAccent(1,'blue','var(--blue)')"></div>
+          <div class="swatch"     style="background:var(--lime)"   onclick="setAccent(1,'lime','var(--lime)')"></div>
+          <div class="swatch"     style="background:var(--orange)" onclick="setAccent(1,'orange','var(--orange)')"></div>
+          <div class="swatch on"  style="background:var(--red)"    onclick="setAccent(1,'red','var(--red)')"></div>
+          <div class="swatch"     style="background:var(--forest)" onclick="setAccent(1,'forest','var(--forest)')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="ptab-content" id="pc2">
+      <div class="field">
+        <label class="fl">Tag label</label>
+        <div class="chip-row" id="tag2">
+          <span class="chip chip-gold"      onclick="setTag(2,'gold','Key Statistic')">Key Statistic</span>
+          <span class="chip chip-blue on"   onclick="setTag(2,'blue','Data Breakdown')">Data Breakdown</span>
+          <span class="chip chip-red"       onclick="setTag(2,'red','Critical Gap')">Critical Gap</span>
+          <span class="chip chip-lime"      onclick="setTag(2,'lime','Opportunity')">Opportunity</span>
+          <span class="chip chip-orange"    onclick="setTag(2,'orange','Field Signal')">Field Signal</span>
+          <span class="chip chip-forest"    onclick="setTag(2,'forest','Policy Note')">Policy Note</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Panel header text</label>
+        <textarea class="ft" style="min-height:44px" id="p2-head" oninput="render()"><strong>Urban vs. Rural access</strong> — a 51-percentage-point gap that aggregate targets systematically obscure.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Bar chart rows (Label | Value% | Colour key: gold/blue/lime/orange/red/forest)</label>
+        <textarea class="ft" id="p2-bars" oninput="render()">Urban SSA | 77 | blue
+Rural SSA | 26 | orange
+SSA Average | 48 | navy</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Insight box (leave blank to hide)</label>
+        <textarea class="ft" style="min-height:50px" id="p2-insight" oninput="render()">Rural electrification requires 3× the investment per connection — yet receives a fraction of the financing directed at urban grid expansion.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Accent colour</label>
+        <div class="swatch-row" id="acc2">
+          <div class="swatch"     style="background:var(--gold)"   onclick="setAccent(2,'gold','var(--gold)')"></div>
+          <div class="swatch on"  style="background:var(--blue)"   onclick="setAccent(2,'blue','var(--blue)')"></div>
+          <div class="swatch"     style="background:var(--lime)"   onclick="setAccent(2,'lime','var(--lime)')"></div>
+          <div class="swatch"     style="background:var(--orange)" onclick="setAccent(2,'orange','var(--orange)')"></div>
+          <div class="swatch"     style="background:var(--red)"    onclick="setAccent(2,'red','var(--red)')"></div>
+          <div class="swatch"     style="background:var(--forest)" onclick="setAccent(2,'forest','var(--forest)')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="ptab-content" id="pc3">
+      <div class="field">
+        <label class="fl">Tag label</label>
+        <div class="chip-row" id="tag3">
+          <span class="chip chip-gold"      onclick="setTag(3,'gold','Key Statistic')">Key Statistic</span>
+          <span class="chip chip-blue"      onclick="setTag(3,'blue','Trend')">Trend</span>
+          <span class="chip chip-red"       onclick="setTag(3,'red','Critical Gap')">Critical Gap</span>
+          <span class="chip chip-lime"      onclick="setTag(3,'lime','Opportunity')">Opportunity</span>
+          <span class="chip chip-orange on" onclick="setTag(3,'orange','Field Signal')">Field Signal</span>
+          <span class="chip chip-forest"    onclick="setTag(3,'forest','Policy Note')">Policy Note</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Character voice</label>
+        <div class="char-chips" id="char3">
+          <span class="char-chip" style="background:#EAF3FA;color:#065A89;border-color:#065A89;" onclick="setChar(3,'analyst','📊','The Analyst','#EAF3FA','#065A89','analyst-style')">📊 Analyst</span>
+          <span class="char-chip" style="background:#FFF1EA;color:#7A2800;border-color:#FF6A13;" onclick="setChar(3,'skeptic','🔍','The Skeptic','#FFF1EA','#7A2800','skeptic-style')">🔍 Skeptic</span>
+          <span class="char-chip on" style="background:#F3F8E5;color:#3A5000;border-color:#9BBE1D;" onclick="setChar(3,'field','🌍','Field Voice','#F3F8E5','#3A5000','field-style')">🌍 Field</span>
+          <span class="char-chip" style="background:#F0F7FA;color:#4A6070;border-color:#C8D8E2;" onclick="setChar(3,'none','','none','#F0F7FA','#4A6070','analyst-style')">No character</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl">Main text</label>
+        <textarea class="ft" id="p3-text" oninput="render()">Off-grid solar could serve <strong>41%</strong> of new connections needed by 2030 — yet mini-grid financing has declined since 2022 peak, while M300 compacts increasingly depend on distributed solutions.</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Metric cards (Label | Value | Colour key: gold/blue/lime/orange/red/forest — 2 rows)</label>
+        <textarea class="ft" style="min-height:52px" id="p3-metrics" oninput="render()">41% off-grid potential share | lime
+−18% mini-grid finance trend | red</textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Accent colour</label>
+        <div class="swatch-row" id="acc3">
+          <div class="swatch"     style="background:var(--gold)"   onclick="setAccent(3,'gold','var(--gold)')"></div>
+          <div class="swatch"     style="background:var(--blue)"   onclick="setAccent(3,'blue','var(--blue)')"></div>
+          <div class="swatch"     style="background:var(--lime)"   onclick="setAccent(3,'lime','var(--lime)')"></div>
+          <div class="swatch on"  style="background:var(--orange)" onclick="setAccent(3,'orange','var(--orange)')"></div>
+          <div class="swatch"     style="background:var(--red)"    onclick="setAccent(3,'red','var(--red)')"></div>
+          <div class="swatch"     style="background:var(--forest)" onclick="setAccent(3,'forest','var(--forest)')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTEL STRIP -->
+    <div class="ptab-content" id="pc4">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.55;font-style:italic;">
+        This is your intelligence layer — the SEforALL-specific analytical connection no other reader will make. Be precise and M300-relevant.
+      </p>
+      <div class="field">
+        <label class="fl">Intel strip text</label>
+        <textarea class="ft" id="f-intel" oninput="render()">M300 energy compacts assume primarily grid-led electrification pathways. IEA data indicates that off-grid solutions are the only cost-effective route for 41% of unelectrified populations. A pathway alignment audit across all 30 compacts is warranted.</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- SO WHAT -->
+  <div class="editor-section">
+    <div class="sec-label"><span class="sec-num">3</span> Intelligence Summary (So What?)</div>
+    <p style="font-size:10.5px;color:var(--muted);margin-bottom:10px;line-height:1.5;font-style:italic;">Maximum 4 points. Each should be a distinct, defensible, action-relevant observation.</p>
+    <div class="field"><label class="fl">Point 1</label><textarea class="ft" style="min-height:52px" id="sw0" oninput="render()">Africa's electrification rate is rising while absolute unelectrified populations remain stuck — a critical framing distinction for all SDG7 reporting and M300 target-setting.</textarea></div>
+    <div class="field"><label class="fl">Point 2</label><textarea class="ft" style="min-height:52px" id="sw1" oninput="render()">A 51-percentage-point urban-rural access gap signals that aggregate national targets systematically mask the populations being left furthest behind.</textarea></div>
+    <div class="field"><label class="fl">Point 3</label><textarea class="ft" style="min-height:52px" id="sw2" oninput="render()">Declining mini-grid finance against rising M300 dependence on distributed solutions represents a structural misalignment SEforALL is positioned to flag and address.</textarea></div>
+    <div class="field"><label class="fl">Point 4 (leave blank to hide)</label><textarea class="ft" style="min-height:52px" id="sw3" oninput="render()">Compact reviews should incorporate an explicit pathway alignment check: grid extension versus off-grid split, benchmarked against least-cost electrification models per country.</textarea></div>
+  </div>
+
+</aside>
+
+<!-- PREVIEW -->
+<main class="preview-panel">
+  <div class="preview-label">Live Preview — 680px output width</div>
+  <div id="flash-out"></div>
+</main>
+
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Export — Standalone HTML</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+        Self-contained HTML file. Save as <strong>flash-0X.html</strong> and open in any browser.
+        For PDF: open in browser → Print → Save as PDF (Chrome recommended for best fidelity).
+        For LinkedIn panels: screenshot individual sections after opening the file.
+      </p>
+      <pre class="code-box" id="code-out"></pre>
+    </div>
+    <div class="modal-foot">
+      <button class="tbtn tbtn-ghost" style="color:var(--ink);border-color:var(--border);" onclick="closeModal()">Close</button>
+      <button class="tbtn tbtn-gold" onclick="copyFromModal()">Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════
+   STATE
+═══════════════════════════════ */
+const S = {
+  panels: [
+    { tag:'gold', tagLabel:'Key Statistic',  char:'analyst', cEmoji:'📊', cName:'The Analyst', cBg:'#EAF3FA', cColor:'#065A89', cStyle:'analyst-style', accent:'var(--gold)'   },
+    { tag:'red',  tagLabel:'What the Headline Misses', char:'skeptic', cEmoji:'🔍', cName:'The Skeptic', cBg:'#FFF1EA', cColor:'#7A2800', cStyle:'skeptic-style', accent:'var(--red)'    },
+    { tag:'blue', tagLabel:'Data Breakdown', char:'none',    cEmoji:'',   cName:'none',         cBg:'#F0F7FA', cColor:'#4A6070', cStyle:'analyst-style', accent:'var(--blue)'   },
+    { tag:'orange',tagLabel:'Field Signal',  char:'field',   cEmoji:'🌍', cName:'Field Voice',  cBg:'#F3F8E5', cColor:'#3A5000', cStyle:'field-style',   accent:'var(--orange)' },
+  ]
+};
+
+const BAR_COLORS = { gold:'#FFB800', blue:'#065A89', lime:'#9BBE1D', orange:'#FF6A13', red:'#DD2E2B', forest:'#183F37', navy:'#022437' };
+const METRIC_STYLES = {
+  gold:   { bg:'#FFF8E0', border:'#FFB800', color:'#7A5500' },
+  blue:   { bg:'#EAF3FA', border:'#065A89', color:'#065A89' },
+  lime:   { bg:'#F3F8E5', border:'#9BBE1D', color:'#3A5000' },
+  orange: { bg:'#FFF1EA', border:'#FF6A13', color:'#7A2800' },
+  red:    { bg:'#FDEAEA', border:'#DD2E2B', color:'#7A0808' },
+  forest: { bg:'#EAF0EF', border:'#183F37', color:'#183F37' },
+};
+
+/* ═══════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════ */
+function switchTab(i) {
+  document.querySelectorAll('.ptab').forEach((t,j) => t.classList.toggle('active', i===j));
+  document.querySelectorAll('.ptab-content').forEach((c,j) => c.classList.toggle('active', i===j));
+}
+
+/* ═══════════════════════════════
+   SETTERS
+═══════════════════════════════ */
+function setTag(pi, key, label) {
+  S.panels[pi].tag = key; S.panels[pi].tagLabel = label;
+  document.querySelectorAll(`#tag${pi} .chip`).forEach(el => {
+    el.classList.toggle('on', el.onclick.toString().includes(`'${key}'`) && el.onclick.toString().includes(`'${label}'`));
+  });
+  render();
+}
+function setChar(pi, key, emoji, name, bg, color, style) {
+  Object.assign(S.panels[pi], { char:key, cEmoji:emoji, cName:name, cBg:bg, cColor:color, cStyle:style });
+  document.querySelectorAll(`#char${pi} .char-chip`).forEach(el => {
+    el.classList.toggle('on', el.onclick.toString().includes(`'${key}'`));
+  });
+  render();
+}
+function setAccent(pi, key, val) {
+  S.panels[pi].accent = val;
+  document.querySelectorAll(`#acc${pi} .swatch`).forEach(el => {
+    el.classList.toggle('on', el.onclick.toString().includes(`'${key}'`));
+  });
+  render();
+}
+
+/* ═══════════════════════════════
+   PARSE HELPERS
+═══════════════════════════════ */
+function v(id) { return document.getElementById(id)?.value || ''; }
+function parseBars(raw) {
+  return raw.split('\n').map(l => { const p = l.split('|').map(s=>s.trim()); return p.length>=2?{label:p[0],val:parseFloat(p[1]),color:BAR_COLORS[p[2]]||BAR_COLORS.blue}:null; }).filter(Boolean);
+}
+function parseMetrics(raw) {
+  return raw.split('\n').map(l => { const p = l.split('|').map(s=>s.trim()); if(!p[0]) return null; const parts=p[0].split(' '); const val=parts[0]; const lbl=parts.slice(1).join(' '); const st=METRIC_STYLES[p[1]]||METRIC_STYLES.blue; return {val,lbl,st}; }).filter(Boolean);
+}
+
+/* ═══════════════════════════════
+   RENDER CHAR BLOCK
+═══════════════════════════════ */
+function renderChar(p) {
+  if (p.char==='none' || !p.cEmoji) return '';
+  return `<div class="char-block">
+    <div class="char-avatar" style="background:${p.cBg};border-color:${p.cColor};">${p.cEmoji}</div>
+    <div class="char-name-label">${p.cName}</div>
+  </div>`;
+}
+
+/* ═══════════════════════════════
+   RENDER PANEL
+═══════════════════════════════ */
+function renderPanel(idx) {
+  const p = S.panels[idx];
+  const hasChar = p.char !== 'none' && p.cEmoji;
+  let body = '';
+
+  body += `<span class="f-tag f-tag-${p.tag}">${p.tagLabel}</span>`;
+
+  if (idx === 0) {
+    const txt = v('p0-text'), num = v('p0-num'), desc = v('p0-desc');
+    if (hasChar) {
+      body += `<div class="char-row">${renderChar(p)}<div class="bubble-col"><div class="speech-card ${p.cStyle}">${txt}</div></div></div>`;
+    } else {
+      body += `<div class="speech-card ${p.cStyle}">${txt}</div>`;
+    }
+    if (num) body += `<div class="stat-callout"><div class="stat-big">${num}</div><div class="stat-desc">${desc}</div></div>`;
+  }
+
+  if (idx === 1) {
+    const txt = v('p1-text'), ins = v('p1-insight');
+    if (hasChar) {
+      body += `<div class="char-row">${renderChar(p)}<div class="bubble-col"><div class="speech-card ${p.cStyle}">${txt}</div>${ins?`<div class="insight-box">${ins}</div>`:''}</div></div>`;
+    } else {
+      body += `<div class="speech-card ${p.cStyle}">${txt}</div>`;
+      if (ins) body += `<div class="insight-box">${ins}</div>`;
+    }
+  }
+
+  if (idx === 2) {
+    const head = v('p2-head'), bars = parseBars(v('p2-bars')), ins = v('p2-insight');
+    body += `<div class="speech-card analyst-style" style="font-size:12px;margin-bottom:2px;">${head}</div>`;
+    if (bars.length) {
+      body += `<div class="bar-chart">${bars.map(b=>`<div class="b-row"><span class="b-label">${b.label}</span><div class="b-track"><div class="b-fill" style="width:${b.val}%;background:${b.color};"></div></div><span class="b-val">${b.val}%</span></div>`).join('')}</div>`;
+    }
+    if (ins) body += `<div class="insight-box">${ins}</div>`;
+  }
+
+  if (idx === 3) {
+    const txt = v('p3-text'), metrics = parseMetrics(v('p3-metrics'));
+    if (hasChar) {
+      body += `<div class="char-row">${renderChar(p)}<div class="bubble-col"><div class="speech-card ${p.cStyle}">${txt}</div></div></div>`;
+    } else {
+      body += `<div class="speech-card ${p.cStyle}">${txt}</div>`;
+    }
+    if (metrics.length) {
+      body += `<div class="metric-row">${metrics.map(m=>`<div class="metric-card" style="background:${m.st.bg};border-color:${m.st.border};color:${m.st.color};"><div class="m-val">${m.val}</div><div class="m-label">${m.lbl}</div></div>`).join('')}</div>`;
+    }
+  }
+
+  return `<div class="f-panel">
+    <div class="panel-top-rule" style="background:${p.accent};"></div>
+    <div class="panel-body">${body}</div>
+  </div>`;
+}
+
+/* ═══════════════════════════════
+   MAIN RENDER
+═══════════════════════════════ */
+function render() {
+  const issue = v('f-issue'), date = v('f-date'), source = v('f-source'), rt = v('f-readtime');
+  const intel = v('f-intel');
+  const sws = [v('sw0'),v('sw1'),v('sw2'),v('sw3')].filter(Boolean);
+
+  // Footer cast
+  const cast = S.panels.filter(p => p.char !== 'none' && p.cEmoji)
+    .filter((p,i,a) => a.findIndex(x=>x.cName===p.cName)===i)
+    .map(p => `<div class="cast-item"><span class="cast-swatch" style="background:${p.cBg};border-color:${p.cColor};"></span>${p.cName}</div>`).join('');
+
+  const html = `<div class="flash">
+  <div class="flash-header">
+    <div class="flash-header-geo"></div>
+    <div class="flash-header-inner">
+      <div>
+        <div class="flash-wordmark">The <span>Briefing</span> Room</div>
+        <div class="flash-tagline">Energy Intelligence Flash · Sustainable Energy for All</div>
+      </div>
+      <div class="flash-meta-block">
+        <div class="flash-issue">Issue #${issue} · ${date}</div>
+        <span class="flash-date">Source</span>
+        <span class="flash-report-name">${source}</span>
+      </div>
+    </div>
+  </div>
+  <div class="flash-gold-rule"></div>
+  <div class="flash-source-bar">
+    <span>Source:</span>
+    <strong>${source}</strong>
+    <span class="sep">|</span>
+    <span>Est. read time: ${rt}</span>
+  </div>
+  <div class="flash-grid">
+    ${renderPanel(0)}
+    ${renderPanel(1)}
+    ${renderPanel(2)}
+    ${renderPanel(3)}
+    <div class="intel-strip">
+      <span class="intel-kicker">Intel Layer</span>
+      <div class="intel-text">${intel}</div>
+    </div>
+  </div>
+  <div class="sowhat-section">
+    <div class="sowhat-header">
+      <span class="sowhat-kicker">Intelligence Summary</span>
+      <div class="sowhat-rule"></div>
+    </div>
+    <div class="sowhat-items">
+      ${sws.map(s=>`<div class="sowhat-item"><span class="sw-bullet">→</span><span class="sw-text">${s}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="flash-footer">
+    <div class="footer-cast">
+      <span style="font-family:var(--f-body);font-size:9.5px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-right:4px;">Voices:</span>
+      ${cast}
+    </div>
+    <div class="footer-right">SEforALL Energy Intelligence · The Briefing Room</div>
+  </div>
+</div>`;
+
+  document.getElementById('flash-out').innerHTML = html;
+}
+
+/* ═══════════════════════════════
+   STANDALONE HTML EXPORT
+═══════════════════════════════ */
+function getExport() {
+  const inner = document.getElementById('flash-out').innerHTML;
+  const allCSS = [...document.styleSheets].map(ss => {
+    try { return [...ss.cssRules].map(r=>r.cssText).join('\n'); } catch(e){ return ''; }
+  }).join('\n');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Briefing Room — Issue #${v('f-issue')} — SEforALL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,600&family=Mulish:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#FFB800;--navy:#022437;--blue:#065A89;--lime:#9BBE1D;--forest:#183F37;--orange:#FF6A13;--ice:#F0F7FA;--white:#FFFFFF;--red:#DD2E2B;--ink:#022437;--muted:#4A6070;--border:#C8D8E2;--f-display:'Barlow Condensed',sans-serif;--f-body:'Mulish',sans-serif}
+body{font-family:var(--f-body);background:#EEF3F6;display:flex;justify-content:center;padding:32px 16px;min-height:100vh;align-items:flex-start;}
+.flash{width:680px;max-width:100%;background:var(--white);font-family:var(--f-body);border:1px solid var(--border);box-shadow:0 2px 16px rgba(2,36,55,.10);}
+.flash-header{background:var(--navy);padding:0;position:relative;overflow:hidden;}
+.flash-header-inner{display:flex;align-items:stretch;justify-content:space-between;padding:18px 22px 16px;position:relative;z-index:1;}
+.flash-header-geo{position:absolute;right:0;top:0;bottom:0;width:200px;background:linear-gradient(135deg,transparent 0%,rgba(6,90,137,.4) 100%);clip-path:polygon(30% 0,100% 0,100% 100%,0% 100%);}
+.flash-wordmark{font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--white);letter-spacing:2px;text-transform:uppercase;line-height:1;}
+.flash-wordmark span{color:var(--gold);}
+.flash-tagline{font-family:var(--f-body);font-size:9.5px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.flash-meta-block{text-align:right;}
+.flash-issue{font-family:var(--f-display);font-size:11px;font-weight:600;color:var(--gold);letter-spacing:2px;text-transform:uppercase;background:rgba(255,184,0,.12);padding:3px 10px;border-radius:2px;border:1px solid rgba(255,184,0,.3);display:inline-block;margin-bottom:5px;}
+.flash-date,.flash-report-name{font-family:var(--f-body);font-size:10px;font-weight:400;color:rgba(255,255,255,.5);line-height:1.6;display:block;}
+.flash-report-name{color:rgba(255,255,255,.75);font-weight:500;}
+.flash-gold-rule{height:3px;background:var(--gold);}
+.flash-source-bar{background:var(--blue);color:rgba(255,255,255,.85);font-family:var(--f-body);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:5px 22px;display:flex;align-items:center;gap:8px;}
+.flash-source-bar .sep{opacity:.3;}
+.flash-source-bar strong{color:#fff;font-weight:600;}
+.flash-grid{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);}
+.f-panel{border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);position:relative;overflow:hidden;}
+.f-panel:nth-child(2n){border-right:none;}
+.f-panel.span2{grid-column:span 2;border-right:none;}
+.panel-top-rule{height:3px;}
+.panel-body{padding:16px 18px 14px;min-height:180px;display:flex;flex-direction:column;gap:10px;}
+.f-tag{font-family:var(--f-display);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:2px 8px;border-radius:2px;border:1px solid;display:inline-block;align-self:flex-start;}
+.f-tag-gold{background:#FFF8E0;color:#7A5500;border-color:var(--gold);}
+.f-tag-blue{background:#EAF3FA;color:var(--blue);border-color:var(--blue);}
+.f-tag-lime{background:#F3F8E5;color:#3A5000;border-color:var(--lime);}
+.f-tag-orange{background:#FFF1EA;color:#7A2800;border-color:var(--orange);}
+.f-tag-red{background:#FDEAEA;color:#7A0808;border-color:var(--red);}
+.f-tag-forest{background:#EAF0EF;color:var(--forest);border-color:var(--forest);}
+.char-row{display:flex;gap:12px;align-items:flex-start;}
+.char-block{flex-shrink:0;text-align:center;width:58px;}
+.char-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto;border:2px solid;}
+.char-name-label{font-family:var(--f-display);font-size:8.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-top:4px;line-height:1.2;color:var(--muted);}
+.bubble-col{flex:1;display:flex;flex-direction:column;gap:7px;}
+.speech-card{background:var(--ice);border-left:3px solid var(--blue);padding:10px 12px;border-radius:0 4px 4px 0;font-family:var(--f-body);font-size:12.5px;line-height:1.55;color:var(--ink);}
+.speech-card.analyst-style{border-left-color:var(--blue);}
+.speech-card.skeptic-style{border-left-color:var(--orange);}
+.speech-card.field-style{border-left-color:var(--lime);}
+.insight-box{background:#FFFBF0;border:1px solid rgba(255,184,0,.4);border-left:3px solid var(--gold);padding:8px 11px;border-radius:0 3px 3px 0;font-family:var(--f-body);font-style:italic;font-size:11.5px;line-height:1.5;color:var(--navy);}
+.stat-callout{background:var(--navy);color:var(--white);padding:12px 14px;border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.stat-big{font-family:var(--f-display);font-size:44px;font-weight:700;color:var(--gold);line-height:1;}
+.stat-desc{font-family:var(--f-body);font-size:10.5px;font-weight:500;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.8px;line-height:1.4;flex:1;}
+.bar-chart{display:flex;flex-direction:column;gap:5px;}
+.b-row{display:flex;align-items:center;gap:8px;}
+.b-label{font-family:var(--f-body);font-size:10.5px;font-weight:500;color:var(--muted);min-width:62px;}
+.b-track{flex:1;height:8px;background:var(--ice);border-radius:1px;overflow:hidden;}
+.b-fill{height:100%;border-radius:1px;}
+.b-val{font-family:var(--f-display);font-size:12px;font-weight:600;color:var(--navy);min-width:30px;text-align:right;}
+.metric-row{display:flex;gap:8px;}
+.metric-card{flex:1;border-radius:3px;padding:9px 10px;border:1px solid;text-align:center;}
+.metric-card .m-val{font-family:var(--f-display);font-size:22px;font-weight:700;line-height:1;}
+.metric-card .m-label{font-family:var(--f-body);font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.6px;margin-top:3px;opacity:.8;}
+.intel-strip{border-bottom:1px solid var(--border);background:var(--ice);padding:10px 18px;display:flex;align-items:flex-start;gap:10px;grid-column:span 2;}
+.intel-kicker{font-family:var(--f-display);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);background:rgba(6,90,137,.1);padding:2px 7px;border-radius:2px;flex-shrink:0;margin-top:1px;}
+.intel-text{font-family:var(--f-body);font-size:11.5px;font-weight:500;color:var(--navy);line-height:1.55;font-style:italic;}
+.sowhat-section{background:var(--navy);padding:16px 22px;}
+.sowhat-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sowhat-kicker{font-family:var(--f-display);font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);}
+.sowhat-rule{flex:1;height:1px;background:rgba(255,184,0,.25);}
+.sowhat-items{display:flex;flex-direction:column;gap:0;}
+.sowhat-item{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07);}
+.sowhat-item:last-child{border-bottom:none;}
+.sw-bullet{font-family:var(--f-display);font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;margin-top:1px;}
+.sw-text{font-family:var(--f-body);font-size:12px;font-weight:400;color:rgba(255,255,255,.85);line-height:1.55;}
+.flash-footer{background:var(--ice);padding:8px 22px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);}
+.footer-cast{display:flex;gap:12px;align-items:center;}
+.cast-item{display:flex;align-items:center;gap:5px;font-family:var(--f-body);font-size:10px;font-weight:500;color:var(--muted);}
+.cast-swatch{width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,.15);}
+.footer-right{font-family:var(--f-body);font-size:9.5px;font-weight:500;color:var(--muted);letter-spacing:.5px;}
+</style>
+</head>
+<body>
+${inner}
+</body>
+</html>`;
+}
+
+function showExport() {
+  document.getElementById('code-out').textContent = getExport();
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function copyFromModal() {
+  navigator.clipboard.writeText(document.getElementById('code-out').textContent)
+    .then(() => { event.target.textContent = '✓ Copied!'; setTimeout(()=>event.target.textContent='Copy to clipboard',2000); });
+}
+function copyHTML() {
+  navigator.clipboard.writeText(getExport())
+    .then(() => { const b = event.target; const o = b.textContent; b.textContent = '✓ Copied!'; setTimeout(()=>b.textContent=o,2000); });
+}
+function doPrint() {
+  const w = window.open('','_blank');
+  w.document.write(getExport());
+  w.document.close();
+  w.onload = () => w.print();
+}
+
+render();
+</script>
+</body>
+</html>
